@@ -1,0 +1,33 @@
+{
+  "routes": [
+    {
+      "id": "tlv-icn-2026-09",
+      "name": "Tel Aviv to Seoul, September 2026",
+      "enabled": true,
+      "trip_type": "round-trip",
+      "origin": "TLV",
+      "destination": "ICN",
+      "departure_date": "2026-09-15",
+      "return_date": "2026-09-21",
+      "adults": 1,
+      "currency": "USD",
+      "alert_threshold": 1000,
+      "max_results": 20,
+      "search_url": "https://www.kiwi.com/en/search/results/tel-aviv-israel/seoul-south-korea/2026-09-15/2026-09-21"
+    },
+    {
+      "id": "tlv-icn-one-way-example",
+      "name": "Tel Aviv to Seoul one-way example",
+      "enabled": false,
+      "trip_type": "one-way",
+      "origin": "TLV",
+      "destination": "ICN",
+      "departure_date": "2026-09-15",
+      "adults": 1,
+      "currency": "USD",
+      "alert_threshold": 1000,
+      "max_results": 20,
+      "search_url": "https://www.kiwi.com/en/search/results/tel-aviv-israel/seoul-south-korea/2026-09-15"
+    }
+  ]
+}
