@@ -1,0 +1,130 @@
+name: Flight Monitor
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      telegram_test:
+        description: "Send only a Telegram test message"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flight-monitor-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-flight-price:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      PRICE_SOURCE: kiwi_browser
+      BROWSER_HEADLESS: "true"
+      BROWSER_TIMEOUT_SECONDS: "90"
+      ILS_PER_USD: "3.60"
+      NOTIFY_EVERY_CHECK: "true"
+      ROUTES_FILE: routes.json
+      PRICES_CSV: prices.csv
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
+      AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Telegram secrets
+        shell: bash
+        run: |
+          missing=0
+          for name in TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is missing in GitHub Secrets"
+              missing=1
+            fi
+          done
+          for name in AMADEUS_CLIENT_ID AMADEUS_CLIENT_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::$name is not set. Current Kiwi browser mode does not use it."
+            fi
+          done
+          exit "$missing"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.telegram_test == true) }}
+        run: python -m playwright install --with-deps chromium
+
+      - name: Restore price history
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.telegram_test == true) }}
+        uses: actions/cache/restore@v4
+        with:
+          path: prices.csv
+          key: prices-${{ github.run_id }}
+          restore-keys: |
+            prices-
+
+      - name: Send Telegram test
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.telegram_test == true }}
+        run: python -m flight_monitor --test-telegram
+
+      - name: Run flight monitor
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.telegram_test == true) }}
+        run: python -m flight_monitor --once
+
+      - name: Save price history
+        if: success() && !(github.event_name == 'workflow_dispatch' && inputs.telegram_test == true) && hashFiles('prices.csv') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: prices.csv
+          key: prices-${{ github.run_id }}
+
+      - name: Send Telegram failure status
+        if: failure() && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        shell: python
+        run: |
+          import json
+          import os
+          import urllib.request
+
+          repo = os.environ.get("GITHUB_REPOSITORY", "repository")
+          run_id = os.environ.get("GITHUB_RUN_ID", "")
+          run_url = f"https://github.com/{repo}/actions/runs/{run_id}"
+          text = "\n".join(
+              [
+                  "<b>Проверка авиабилетов не выполнилась</b>",
+                  "GitHub Actions завершился с ошибкой.",
+                  "",
+                  f"Репозиторий: {repo}",
+                  f"Логи: {run_url}",
+              ]
+          )
+          payload = {
+              "chat_id": os.environ["TELEGRAM_CHAT_ID"],
+              "text": text,
+              "parse_mode": "HTML",
+              "disable_web_page_preview": True,
+          }
+          request = urllib.request.Request(
+              f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendMessage",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              response.read()
