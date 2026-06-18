@@ -50,11 +50,6 @@ jobs:
               missing=1
             fi
           done
-          for name in AMADEUS_CLIENT_ID AMADEUS_CLIENT_SECRET; do
-            if [ -z "${!name}" ]; then
-              echo "::warning::$name is not set. Current Kiwi browser mode does not use it."
-            fi
-          done
           exit "$missing"
 
       - name: Set up Python
