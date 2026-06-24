@@ -1,13 +1,14 @@
 # Flight Monitor
 
-Python monitor for TLV -> ICN flight prices.
+Python monitor for flight prices from Tel Aviv.
 
-Default route:
+Active routes:
 
-- route: `TLV` to `ICN`
-- trip type: `round-trip`
-- departure: `2026-09-15`
-- return: `2026-09-21`
+- `TLV` to `ICN`, round-trip, `2026-09-15` to `2026-09-21`
+- `TLV` to `MNL`, round-trip, `2026-12-29` to `2027-01-03`
+
+Default settings:
+
 - passengers: `1` adult
 - currency: `USD`
 - Telegram alert threshold: `1000 USD`
@@ -159,6 +160,20 @@ Routes are configured in `routes.json`.
       "destination": "ICN",
       "departure_date": "2026-09-15",
       "return_date": "2026-09-21",
+      "adults": 1,
+      "currency": "USD",
+      "alert_threshold": 1000,
+      "max_results": 20
+    },
+    {
+      "id": "tlv-mnl-2026-12",
+      "name": "Tel Aviv to Manila, New Year 2027",
+      "enabled": true,
+      "trip_type": "round-trip",
+      "origin": "TLV",
+      "destination": "MNL",
+      "departure_date": "2026-12-29",
+      "return_date": "2027-01-03",
       "adults": 1,
       "currency": "USD",
       "alert_threshold": 1000,
