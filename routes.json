@@ -16,6 +16,21 @@
       "search_url": "https://www.kiwi.com/en/search/results/tel-aviv-israel/seoul-south-korea/2026-09-15/2026-09-21"
     },
     {
+      "id": "tlv-mnl-2026-12",
+      "name": "Tel Aviv to Manila, New Year 2027",
+      "enabled": true,
+      "trip_type": "round-trip",
+      "origin": "TLV",
+      "destination": "MNL",
+      "departure_date": "2026-12-29",
+      "return_date": "2027-01-03",
+      "adults": 1,
+      "currency": "USD",
+      "alert_threshold": 1000,
+      "max_results": 20,
+      "search_url": "https://www.kiwi.com/en/search/results/tel-aviv-israel/manila-philippines/2026-12-29/2027-01-03"
+    },
+    {
       "id": "tlv-icn-one-way-example",
       "name": "Tel Aviv to Seoul one-way example",
       "enabled": false,
